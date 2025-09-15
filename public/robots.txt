@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://yourdomain.com/sitemap.xml
+
+# 크롤링 빈도 제한
+Crawl-delay: 1
