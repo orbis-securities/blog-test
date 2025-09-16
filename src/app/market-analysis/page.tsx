@@ -168,7 +168,7 @@ export default function MarketAnalysisPage() {
       let filtered = mockAnalysisPosts;
       
       if (selectedCategory !== "all") {
-        filtered = filtered.filter(post => post.categories[0] === selectedCategory);
+        filtered = filtered.filter(post => post.category === selectedCategory);
       }
       
       if (searchQuery) {
@@ -340,7 +340,7 @@ export default function MarketAnalysisPage() {
                           </div>
                           <CardContent className="p-6">
                             <div className="flex items-center gap-2 mb-3">
-                              <Badge variant="secondary">{post.categories[0]}</Badge>
+                              <Badge variant="secondary">{post.category}</Badge>
                               <span className="text-sm text-muted-foreground">{post.readTime}</span>
                             </div>
                             <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
@@ -396,7 +396,7 @@ export default function MarketAnalysisPage() {
                               </div>
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <Badge variant="secondary">{post.categories[0]}</Badge>
+                                  <Badge variant="secondary">{post.category}</Badge>
                                   <span className="text-sm text-muted-foreground">{post.readTime}</span>
                                 </div>
                                 <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
