@@ -58,8 +58,7 @@ export async function getPosts(maxResults?: number): Promise<Post[]> {
     let q = query(
       collectionGroup(db, 'posts'),
       where('blogId', '==', BLOG_ID.trim()),
-      where('status', '==', 'published'),
-      orderBy('publishedAt', 'desc')
+      where('status', '==', 'published')
     );
 
     // 제한이 있으면 추가
@@ -137,20 +136,12 @@ export async function getPostById(postId: string): Promise<Post | null> {
 
     console.log('📖 포스트 상세 조회 시작, ID:', postId);
     
-    // Collection Group에서 포스트 검색
-    const q = query(
-      collectionGroup(db, 'posts'),
-      where('__name__', '==', postId),
-      where('blogId', '==', BLOG_ID),
-      where('status', '==', 'published')
-    );
+    // 직접 경로로 포스트 조회
+    const docRef = doc(db, 'blogs', BLOG_ID, 'posts', postId);
+    const docSnap = await getDoc(docRef);
 
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      const docSnap = querySnapshot.docs[0];
+    if (docSnap.exists()) {
       const data = docSnap.data();
-
       const post = {
         id: docSnap.id,
         ...data,
@@ -162,8 +153,11 @@ export async function getPostById(postId: string): Promise<Post | null> {
         }
       } as Post;
 
-      console.log('✅ 포스트 상세 조회 완료:', post.title);
-      return post;
+      // 발행된 포스트인지 확인
+      if (post.status === 'published') {
+        console.log('✅ 포스트 상세 조회 완료:', post.title);
+        return post;
+      }
     }
     
     console.log('❌ 포스트를 찾을 수 없음:', postId);
@@ -239,8 +233,7 @@ export async function getPostsByCategory(category: string): Promise<Post[]> {
       collectionGroup(db, 'posts'),
       where('blogId', '==', BLOG_ID),
       where('status', '==', 'published'),
-      where('categories', 'array-contains', category),
-      orderBy('publishedAt', 'desc')
+      where('categories', 'array-contains', category)
     );
     
     const querySnapshot = await getDocs(q);

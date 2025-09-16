@@ -87,7 +87,7 @@ export default function BlogList({ className = "" }: BlogListProps) {
     const filtered = posts.filter(post =>
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())) ||
       post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
@@ -222,7 +222,7 @@ export default function BlogList({ className = "" }: BlogListProps) {
                       {/* 카테고리와 태그 */}
                       <div className="flex flex-wrap gap-2">
                         <Badge variant="secondary" className="text-xs">
-                          {post.category}
+                          {post.categories[0] || '미분류'}
                         </Badge>
                         
                         {post.tags.slice(0, 3).map((tag) => (
