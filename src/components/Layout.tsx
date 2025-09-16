@@ -73,7 +73,7 @@ export default function Layout({ children, className }: LayoutProps) {
       const filtered = mockPosts.filter(post =>
         post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.categories.some(cat => cat.toLowerCase().includes(searchQuery.toLowerCase()))
+        post.category.toLowerCase().includes(searchQuery.toLowerCase())
       ).slice(0, 6);
       setSearchResults(filtered);
       setSelectedResultIndex(-1);
