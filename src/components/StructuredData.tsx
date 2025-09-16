@@ -33,7 +33,7 @@ export default function StructuredData({ post }: StructuredDataProps) {
       "@type": "WebPage",
       "@id": `${baseUrl}/posts/${post.id}`
     },
-    "articleSection": post.category,
+    "articleSection": post.categories[0] || '미분류',
     "keywords": post.tags.join(', '),
     "wordCount": post.content.replace(/<[^>]*>/g, '').split(/\s+/).length,
     "url": `${baseUrl}/posts/${post.id}`,
