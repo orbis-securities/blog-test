@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, query, where, orderBy, getDocs, doc, getDoc, limit, Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, getDoc, limit, Timestamp, collectionGroup } from 'firebase/firestore';
 
 // Firestore 연결 상태 확인 함수
 function isFirestoreAvailable(): boolean {
@@ -12,7 +12,7 @@ export interface Post {
   content: string;
   excerpt: string;
   blogId: string;
-  category: string;
+  categories: string[];
   tags: string[];
   status: 'draft' | 'published';
   createdAt: Timestamp;
@@ -54,11 +54,12 @@ export async function getPosts(maxResults?: number): Promise<Post[]> {
       return [];
     }
     
-    // 단순 쿼리로 시작 - 복합 인덱스 없이
+    // Collection Group 방식으로 조회
     let q = query(
-      collection(db, 'posts'),
+      collectionGroup(db, 'posts'),
       where('blogId', '==', BLOG_ID.trim()),
-      where('status', '==', 'published')
+      where('status', '==', 'published'),
+      orderBy('publishedAt', 'desc')
     );
 
     // 제한이 있으면 추가
@@ -99,11 +100,7 @@ export async function getPosts(maxResults?: number): Promise<Post[]> {
       }
     });
     
-    // 클라이언트 사이드에서 정렬 (publishedAt 기준 내림차순)
-    posts.sort((a, b) => {
-      if (!a.publishedAt || !b.publishedAt) return 0;
-      return b.publishedAt.seconds - a.publishedAt.seconds;
-    });
+    // Collection Group에서 이미 정렬됨
     
     console.log('✅ 포스트 목록 조회 완료:', posts.length, '개');
     return posts;
@@ -140,11 +137,20 @@ export async function getPostById(postId: string): Promise<Post | null> {
 
     console.log('📖 포스트 상세 조회 시작, ID:', postId);
     
-    const docRef = doc(db, 'posts', postId);
-    const docSnap = await getDoc(docRef);
-    
-    if (docSnap.exists()) {
+    // Collection Group에서 포스트 검색
+    const q = query(
+      collectionGroup(db, 'posts'),
+      where('__name__', '==', postId),
+      where('blogId', '==', BLOG_ID),
+      where('status', '==', 'published')
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const docSnap = querySnapshot.docs[0];
       const data = docSnap.data();
+
       const post = {
         id: docSnap.id,
         ...data,
@@ -155,15 +161,9 @@ export async function getPostById(postId: string): Promise<Post | null> {
           comments: 0
         }
       } as Post;
-      
-      // 해당 블로그의 포스트인지 확인
-      if (post.blogId === BLOG_ID && post.status === 'published') {
-        console.log('✅ 포스트 상세 조회 완료:', post.title);
-        return post;
-      } else {
-        console.log('❌ 접근 권한 없는 포스트:', post.blogId, post.status);
-        return null;
-      }
+
+      console.log('✅ 포스트 상세 조회 완료:', post.title);
+      return post;
     }
     
     console.log('❌ 포스트를 찾을 수 없음:', postId);
@@ -188,7 +188,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     console.log('📖 포스트 슬러그 조회 시작:', slug);
     
     const q = query(
-      collection(db, 'posts'),
+      collectionGroup(db, 'posts'),
       where('blogId', '==', BLOG_ID),
       where('status', '==', 'published'),
       where('slug', '==', slug)
@@ -236,10 +236,11 @@ export async function getPostsByCategory(category: string): Promise<Post[]> {
     console.log('📖 카테고리별 포스트 조회 시작:', category);
     
     const q = query(
-      collection(db, 'posts'),
+      collectionGroup(db, 'posts'),
       where('blogId', '==', BLOG_ID),
       where('status', '==', 'published'),
-      where('category', '==', category)
+      where('categories', 'array-contains', category),
+      orderBy('publishedAt', 'desc')
     );
     
     const querySnapshot = await getDocs(q);
@@ -259,11 +260,7 @@ export async function getPostsByCategory(category: string): Promise<Post[]> {
       } as Post);
     });
     
-    // 클라이언트 사이드에서 정렬 (publishedAt 기준 내림차순)
-    posts.sort((a, b) => {
-      if (!a.publishedAt || !b.publishedAt) return 0;
-      return b.publishedAt.seconds - a.publishedAt.seconds;
-    });
+    // Collection Group에서 이미 정렬됨
     
     console.log('✅ 카테고리별 포스트 조회 완료:', posts.length, '개');
     return posts;
