@@ -140,7 +140,7 @@ export default function PostPage() {
             {/* 카테고리 */}
             <div className="mb-4">
               <Badge variant="secondary" className="text-sm">
-                {post.category}
+                {post.categories[0] || '미분류'}
               </Badge>
             </div>
 
